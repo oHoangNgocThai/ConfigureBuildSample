@@ -5,19 +5,47 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 28 // Là mức API nên sử dụng hoặc thấp hơn để compile ứng dụng
     defaultConfig {
-        applicationId "android.thaihn.configurebuildsample"
-        minSdkVersion 21
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        applicationId "android.thaihn.configurebuildsample" // id của ứng dụng khi được publish lên Store
+        minSdkVersion 21 // SDK thấp nhất mà ứng dụng hỗ trợ
+        targetSdkVersion 28 // Version SDK được chỉ định dùng để test ứng dụng
+        versionCode 1 // Định nghĩa số hiệu version của ứng dụng, mỗi lần update ứng dụng đều phải tăng lên
+        versionName "1.0" // Định nghĩa tên version của ứng dụng, ví dụ như 1.1.0
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+    // Là nơi cấu hình nhiều build type khác nhau. Mặc định, hệ thống sẽ định nghĩa 2 build type là debug và release.
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+        }
+
+        staging {
+            initWith debug
+            manifestPlaceholders = [hostName:"android.thaihn.configurebuildsample"]
+            applicationIdSuffix ".debugStaging"
+        }
+
+    }
+
+    // Tạo ra nhiều version khác nhau của ứng dụng. Ứng dụng có thể là bản demo hoặc là full
+    flavorDimensions "version"
+    productFlavors {
+        demo {
+            dimension "version"
+            applicationIdSuffix ".demo"
+            versionNameSuffix "-demo"
+        }
+        full {
+            dimension "version"
+            applicationIdSuffix ".full"
+            versionNameSuffix "-full"
         }
     }
 }
