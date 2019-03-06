@@ -176,5 +176,47 @@ variantFilter { variant ->
         }
     }
 ```
+3. Dependencies
+* Bạn có thể cấu hình các phụ thuộc cho một build variant hoặc là test bằng cách đặt tên của biến thể build hoặc source set trước từ khóa **Implementation** như trong ví dụ sau:
+```
+dependencies {
+    // Adds the local "mylibrary" module as a dependency to the "free" flavor.
+    freeImplementation project(":mylibrary")
 
+    // Adds a remote binary dependency only for local tests.
+    testImplementation 'junit:junit:4.12'
 
+    // Adds a remote binary dependency only for the instrumented test APK.
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
+```
+* Một số các cấu hình của dependency:
+    * **implementation**(thay thế cho compile): Sử dụng ở các phiên bản Android Studio Plugin từ 3.0.0. Chỉ chạy trong thời gian runtime. Hầu hết các module của ứng dụng và test đều sử dụng cấu hình này vì nó làm giảm thời gian cần thiết để biên dịch lại khi có thay đổi.
+    * **api**(thay thế cho compile): Vì nó cho phép các phụ thuộc chạy trong cả runtime và compile time nên sẽ làm chậm thời gian xây dựng ứng dụng. Vì vậy nên cân nhắc trước khi sử dụng vì nó giống như là compile ở phiên bản cũ.
+    * **compileOnly**(thay thế cho provided): Nó chỉ thêm phụ thuộc vào đường dẫn biên dịch chứ không thêm vào đầu ra bản dựng. Điều này sẽ giúp bản APK sinh ra bớt đi những thư viện không cần thiết lúc phát triển.
+    * **runtimeOnly**(thay thế cho apk): Hiện không còn sử dụng nữa, vì nó chỉ thêm phụ thuộc cho đầu ra của bản dựng. Có thể dùng với dependency ads của firebase.
+    * **annotationProcessor**(thay thế cho compile): Sử dụng để thêm phụ thuộc vào bộ xử lý chú thích, đường dẫn này được tách ra riêng so với các phụ thuộc khác.
+
+* Exclude transitive: Dùng để tránh việc phụ thuộc bắc cầu(transitive) được sinh ra trong ứng dụng. Điều này có nghĩa là 2 phụ thuộc cùng có 1 sự phụ thuộc vào các phiên bản khác nhau của cùng một thư viện.
+Ví dụ dưới đây cho thấy 2 phụ thuộc đều có chung phụ thuộc đến thư viện **org.hamcrest:hamcrest-core** đối với các phiên bản khác nhau:
+```
+dependencies {
+    androidTestCompile 'junit:junit:4.12' //(Depends on version 1.3)
+    androidTestCompile 'org.mockito:mockito-core:1.10.19' //(Depends on version 1.1)
+}
+```
+Để xử lý việc này chúng ta cần phải sử dụng từ khóa **Exclude** như sau để giải quyết:
+```
+dependencies {
+    implementation ('junit:junit:4.12'){
+        exclude group: 'org.hamcrest', module:'hamcrest-core'
+    }
+
+    androidTestImplementation ('org.mockito:mockito-core:1.10.19'){
+        exclude group: 'org.hamcrest', module:'hamcrest-core'
+    }
+}
+```
+## Gradle Task
+
+## Code Coverage with Jacoco
