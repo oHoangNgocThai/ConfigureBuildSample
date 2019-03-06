@@ -14,6 +14,19 @@ android {
         versionName "1.0" // Định nghĩa tên version của ứng dụng, ví dụ như 1.1.0
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        release {
+            storeFile file("release-key.keystore")
+            storePassword 'password'
+            keyAlias 'alias'
+            keyPassword 'thaihn'
+        }
+    }
+
+    dataBinding{
+        enabled = true
+    }
+
     // Là nơi cấu hình nhiều build type khác nhau. Mặc định, hệ thống sẽ định nghĩa 2 build type là debug và release.
     buildTypes {
         release {
@@ -46,6 +59,27 @@ android {
             dimension "version"
             applicationIdSuffix ".full"
             versionNameSuffix "-full"
+        }
+    }
+
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        // To check for a certain build type, use variant.buildType.name == "<buildType>"
+        if ( names.contains("demo") && names.contains("staging")) {
+            // Gradle ignores any variants that satisfy the conditions above.
+            setIgnore(true)
+        }
+    }
+
+    sourceSets {
+        demo {
+            java.srcDirs = ['src/demo/java', 'src/main/java']
+            resources.srcDirs = ['src/demo/res']
+        }
+
+        full {
+            java.srcDirs = ['src/full/java', 'src/main/java']
+            resources.srcDirs = ['src/full/res']
         }
     }
 }

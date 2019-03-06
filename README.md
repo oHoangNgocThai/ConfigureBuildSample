@@ -97,6 +97,20 @@ dependencies {
     * **src/buildType**: source set sinh ra cho các build type khác nhau
     * **src/productFlavor**: source set sinh ra cho các productFlavor
     * **src/productFlavorBuildType**: source set sinh ra dành riêng cho các build variant
+* Có thể tạo từng source set cho từng phiên bản productFlavor như sau:
+```
+sourceSets {
+    demo {
+        java.srcDirs = ['src/demo/java', 'src/main/java']
+        resources.srcDirs = ['src/demo/res']
+    }
+
+    full {
+        java.srcDirs = ['src/full/java', 'src/main/java']
+        resources.srcDirs = ['src/full/res']
+    }
+}
+```
 ### Task
 Những task có sẵn trong Gradle android được chia thành nhiều nhóm, có 4 nhóm chính cơ bản sau:
 * **android**: Các task ở đây liên quan đến **dependencies**, **signingReport**(Những thông tin lúc đăng lên store), **sourceSets**(các source set được sinh ra).
@@ -134,5 +148,33 @@ buildTypes {
 ```
 2. Configure product flavors
 * Tạo **product flavors** cũng tương tự như tạo **build types**, sau đó thêm chúng vào khối **productFlavors** trong file cấu hình bao gồm các cài đặt mà bạn muốn.
-* Product Flavors hỗ trợ các thuộc tính giống như **defaultConfig** bởi vì nó nằm ở trong lớp ProductFlavor. Điều này có nghĩa là bạn có thể cung cấp cấu hình cơ sở cho tất cả các product flavor cho khối **defaultConfig** và mỗi **product flavor** có thể thay đổi bât kì giá trị mặc định nào, chẳng hạn như applicationId. 
+* Product Flavors hỗ trợ các thuộc tính giống như **defaultConfig** bởi vì nó nằm ở trong lớp ProductFlavor. Điều này có nghĩa là bạn có thể cung cấp cấu hình cơ sở cho tất cả các product flavor cho khối **defaultConfig** và mỗi **product flavor** có thể thay đổi bât kì giá trị mặc định nào, chẳng hạn như applicationId.
+* Với **flavorDimensions** cũng thực hiện việc nhóm các productFlavor lại thành các nhóm khác nhau có cùng thuộc tính.
+``` 
+flavorDimensions "version"
+    productFlavors {
+        demo {
+            dimension "version"
+            applicationIdSuffix ".demo"
+            versionNameSuffix "-demo"
+        }
+        full {
+            dimension "version"
+            applicationIdSuffix ".full"
+            versionNameSuffix "-full"
+        }
+    }
+```
+* Việc tạo ra rất nhiều version productFlavor sẽ dẫn đến sinh ra những build variant không cần thiết. Vì vậy sẽ có **variantFilter** giúp chúng ta lọc bớt những bản build không cần thiết.
+```
+variantFilter { variant ->
+        def names = variant.flavors*.name
+        // To check for a certain build type, use variant.buildType.name == "<buildType>"
+        if ( names.contains("demo") && names.contains("staging")) {
+            // Gradle ignores any variants that satisfy the conditions above.
+            setIgnore(true)
+        }
+    }
+```
+
 
