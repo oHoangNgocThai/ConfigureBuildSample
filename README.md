@@ -118,6 +118,15 @@ Những task có sẵn trong Gradle android được chia thành nhiều nhóm, 
 * **install**: Các task liên quan đến cài đặt ứng dụng
 * **verification**: Các task liên quan đến check device, connect, kiến trúc (lint task).
 
+### Build phases
+Gradle Build trải qua 3 giai đoạn sau:
+
+* `Initialization`: Gradle hỗ trợ xây dựng một hoặc nhiều project. Trong giai đoạn khởi tạo này, Gradle sẽ xác định dự án nào sẽ tham gia vào quá trình xây dựng và tạo thể hiện riêng cho mỗi project.
+* `Configuration`: Trong giai đoạn này, các đối tượng trong project được cấu hình. Các build script của toàn project là một phần của bản build được thực thi.
+* `Execution`: Gradle xác định tập hợp con của các tác vụ, được tạo và cấu hình trong giai đoạn `Configuration` sẽ được thực thi. Các task được xác định bởi các đối số sẽ được truyền cho Gradle ở tại thư mục hiện tại. Sau đó Gradle thực thi từng task một.
+
+
+
 ## Configure build variants
 * Việc cài đặt **Build variant** sẽ giúp cho bạn có thể tạo được nhiều phiên bản của ứng dụng bên trong một project cũng như làm thế nào để quản lý dependencies và signing configurations.
 * Mỗi một **build variant** là một phiên bản của ứng dụng mà bạn có thể xây dựng. Ví dụ bạn cần xây dựng ứng dụng với các môi trường dev, staging, production, ... trên cùng một project.
@@ -218,5 +227,49 @@ dependencies {
 }
 ```
 ## Gradle Task
+> Mỗi Gradle Build được xây dựng từ nhiều project khác nhau, còn mỗi project lại được tạo thành từ một hoặc nhiều task.
+
+* Lifecycle task là những task không tự chạy, chúng thường không có bất kỳ action nào. Một số khái niệm được Lifecycle task đại diện sau:
+    
+    * `work-folow step`:  Đại diện cho một công việc nào đó, ví dụ như chạy tất cả các lệnh check với task `check` hoặc `lint`.
+    * `a buildable thing`: Dùng để build 1 bản dựng nào đó, ví dụ tạo một bản product hay là bản debug cho project.
+    * `công việc cần phải thực thi nhiều tác vụ login giống nhau`: Ví dụ như chạy tất cả các lệnh biên dịch với compileAll.
+    
+* Các task phân chia ra nhiều loại, dựa vào nó có được gắn nhãn task hay không. Kết quả của task cũng dựa vào nhãn của task để hiển thị trong bảng điều khiển hay là giao diện người dùng.
+
+    * `(no label) or EXECUTED`: Task thực hiện các hành động của nó, Gradle xác định được chúng và được thực thi như là một phần của bản build. Cũng có thể là các task không có hành động, phụ thuộc. 
+    * `UP-TO-DATE`: Các task mà input và output không có sự thay đổi gì.
+    * `FROM-CACHE`: Các output của task có thể được tìm thấy ở một thực thi trước đó. 
+    * `SKIPPED`: Các task không thực hiện hành động mà đã được loại bỏ khỏi command-line.
+    * `NO-SOURCE`: Task không cần thực hiện các hành động của nó. Có input và output nhưng lại không có nguồn. Ví dụ như các tệp .java cho `JavaCompile`.
+    
+* Định nghĩa một task đơn giản như sau:
+```
+task helloTask{
+    println "Hello task"
+}    
+```
+
+* Vì task không tự chạy mà tùy theo hành động nào đó từ command-line hoặc giao diện Android Studio nên việc custom task chạy khi nào, trước hay sau khi build, chạy tự động khi build thì ra sao. Chúng ta sử dụng `depenOn` để cấu hình custom task cùng với bản build như sau: 
+```
+task myTask << {
+    println 'do it before build'
+}
+
+build.dependsOn myTask
+```
 
 ## Code Coverage with Jacoco
+> `Test coverage report` là một công cụ quan trọng để đo lường các test đối với code của mình. Mặc dù không được đảm bảo phần mềm sẽ không có bug nhưng sẽ có tỷ lệ bao phủ cao để tránh được nhiều vấn đề đau đầu trong dự án của bạn.
+
+* Để tạo `coverage report`, chúng ta sử dụng Jacoco(Java Code Coverage), một trong những công cụ được sử dụng nhiều nhất trong Java cho mục đíc này. Nhưng môi trường Android có một kịch bản cụ thể, có 2 bản test là `test`(unit) và `androidTest`(instrumented).
+
+### Setting Jacoco
+
+* Thêm dependecy của jacoco vào trong file build.gradle project-level:
+```
+dependencies {
+    classpath 'com.android.tools.build:gradle:3.0.1'
+    classpath 'org.jacoco:org.jacoco.core:0.8.0'
+}
+```
