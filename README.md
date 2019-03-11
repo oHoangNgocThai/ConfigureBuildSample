@@ -262,7 +262,8 @@ build.dependsOn myTask
 ## Code Coverage with Jacoco
 > `Test coverage report` là một công cụ quan trọng để đo lường các test đối với code của mình. Mặc dù không được đảm bảo phần mềm sẽ không có bug nhưng sẽ có tỷ lệ bao phủ cao để tránh được nhiều vấn đề đau đầu trong dự án của bạn.
 
-* Để tạo `coverage report`, chúng ta sử dụng Jacoco(Java Code Coverage), một trong những công cụ được sử dụng nhiều nhất trong Java cho mục đíc này. Nhưng môi trường Android có một kịch bản cụ thể, có 2 bản test là `test`(unit) và `androidTest`(instrumented).
+* Để tạo `coverage report`, chúng ta sử dụng Jacoco(Java Code Coverage), một trong những công cụ được sử dụng nhiều nhất trong Java cho mục đích này. Nhưng môi trường Android có một kịch bản cụ thể, có 2 bản test là `test`(unit) và `androidTest`(instrumented).
+* 
 
 ### Setting Jacoco
 
@@ -270,6 +271,80 @@ build.dependsOn myTask
 ```
 dependencies {
     classpath 'com.android.tools.build:gradle:3.0.1'
-    classpath 'org.jacoco:org.jacoco.core:0.8.0'
+    classpath 'org.jacoco:org.jacoco.core:0.8.2'
 }
 ```
+* Thêm plugin, task, config trong file build.gradle app-level:
+
+```
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = '0.8.2'
+}
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+}
+```
+
+* Tạo 1 task để run khi chạy tool Jacoco
+```
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def debugTree = fileTree(dir: "$project.buildDir/intermediates/kotlin-classes/debug", excludes: fileFilter)
+    def mainSrc = "$project.projectDir/src/main/java"
+
+    sourceDirectories = files([mainSrc])
+    classDirectories = files([debugTree])
+    executionData = fileTree(dir: project.buildDir, includes: [
+            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
+    ])
+}
+```
+ 
+* Thêm testCoverageEnabled true vào build type debug
+```
+buildTypes {
+    debug {
+        applicationIdSuffix ".debug"
+        debuggable true
+        testCoverageEnabled true
+    }
+}
+```
+
+* Thêm test option vào bên trong thẻ `android`: 
+```
+testOptions {
+    execution 'ANDROID_TEST_ORCHESTRATOR'
+    animationsDisabled true
+
+    unitTests {
+        includeAndroidResources = true
+    }
+}
+```
+
+* Thêm vài dependency dành cho việc test vào module app: 
+
+```
+dependencies {
+    ... 
+    
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestUtil 'com.android.support.test:orchestrator:1.0.2'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.robolectric:robolectric:4.0.2'
+}
+```
+
+### Run task with Jacoco tool
+* Bạn có thể run task bằng dòng lệnh hoặc là bằng task trong phần `gradle` của Android Studio. Ở đây mình sử dụng tool trong phần `gradle/app/Run Gradle Task` sau đó tìm đến tên của task cần run. 
+* Khi run các task tương ứng sẽ sinh ra file dạng `html` để lưu trữ dữ liệu test. Thông thường ở bên trong thư mục `app/build/reports/androidTests/connected/index.html`. Bạn có thể mở file này với trình duyệt để xem kết quả.
